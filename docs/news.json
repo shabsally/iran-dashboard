@@ -1,0 +1,106 @@
+{
+  "fetchedAt": "2026-04-12T07:00:00.000Z",
+  "fetchedOn": "2026-04-12",
+  "articleCount": 9,
+  "articles": [
+    {
+      "headline": "Islamabad talks collapse after 21 hours — no deal reached between US and Iran",
+      "summary": "US Vice President JD Vance confirmed negotiations ended without agreement after more than 21 hours of talks in Islamabad. Iran failed to provide a commitment not to develop a nuclear weapon, which Vance called the core US demand. Iran submitted its own 10-point maximalist plan demanding full sanctions relief, US military withdrawal, and continued Hormuz control.",
+      "source": "ABC News",
+      "url": "https://abcnews.go.com/International/live-updates/iran-live-updates-casualties-reported-missile-strikes-israel/?id=131757074",
+      "date": "12 Apr 2026",
+      "tag": "diplomacy",
+      "region": "international",
+      "scenarios": ["Renewed escalation", "Frozen conflict"],
+      "isNew": true
+    },
+    {
+      "headline": "600,000 displaced in southern Lebanon as Israel deepens ground offensive",
+      "summary": "Around 600,000 people — mostly from Shia communities — have been forced from their homes in southern Lebanon. Israel deployed five divisions and blew up bridges on the Litani River to cut off the south. Netanyahu announced plans to demolish border settlements and occupy southern Lebanon up to the Litani River.",
+      "source": "Al Jazeera / Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2026_Lebanon_war",
+      "date": "12 Apr 2026",
+      "tag": "military",
+      "region": "lebanon",
+      "scenarios": ["Renewed escalation", "Frozen conflict"],
+      "isNew": true
+    },
+    {
+      "headline": "UAE most heavily targeted Gulf state — 660+ Iranian strike events documented since Feb 28",
+      "summary": "ACLED documented over 660 Iranian strike events across Gulf states since the conflict began, killing at least 41 people. The UAE suffered the largest share of successful impacts while Kuwait recorded the highest casualties. Targets included ports, airports, energy infrastructure, residential areas, and AWS data centres in the UAE and Bahrain.",
+      "source": "ACLED",
+      "url": "https://acleddata.com/update/middle-east-overview-april-2026",
+      "date": "12 Apr 2026",
+      "tag": "military",
+      "region": "gulf",
+      "scenarios": ["Frozen conflict", "Renewed escalation"],
+      "isNew": true
+    },
+    {
+      "headline": "Iran strikes wipe out 17% of Qatar's LNG capacity for up to five years",
+      "summary": "Iran attacked Qatar's LNG production facility in retaliation for Israeli strikes on the South Pars gas field, destroying roughly 17% of Qatar's LNG capacity with damage expected to last up to five years. Qatar shot down two Iranian Su-24 bombers in response — the first nation to down manned Iranian aircraft in the conflict.",
+      "source": "Reuters / House of Commons Library",
+      "url": "https://researchbriefings.files.parliament.uk/documents/CBP-10521/CBP-10521.pdf",
+      "date": "12 Apr 2026",
+      "tag": "economic",
+      "region": "gulf",
+      "scenarios": ["Frozen conflict", "Renewed escalation"],
+      "isNew": true
+    },
+    {
+      "headline": "UNICEF: 1,100+ children killed or injured — UNESCO condemns heritage site destruction",
+      "summary": "UNICEF reported more than 1,100 children injured or killed since the conflict began, including around 200 in Iran and 91 in Lebanon. UNESCO condemned strikes on Golestan Palace, a UNESCO World Heritage Site in Tehran, calling it a violation of international law. The Safavid-era Rashk Palace was also destroyed.",
+      "source": "UNICEF / Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/2026_Iran_war",
+      "date": "12 Apr 2026",
+      "tag": "humanitarian",
+      "region": "humanitarian",
+      "scenarios": ["Regime collapse", "Frozen conflict"],
+      "isNew": true
+    },
+    {
+      "headline": "Iran recruits children as young as 12 into IRGC as military losses mount past 5,300",
+      "summary": "With Iranian military deaths estimated between 3,000 and 5,300+, the IRGC launched a 'For Iran' initiative allowing children as young as 12 into security-related roles. Iran also banned food exports, ordered civilians to delete foreign social media apps, and announced IRGC checkpoints in cities nationwide.",
+      "source": "ACLED / Wikipedia",
+      "url": "https://en.wikipedia.org/wiki/Timeline_of_the_2026_Iran_war",
+      "date": "12 Apr 2026",
+      "tag": "military",
+      "region": "iran",
+      "scenarios": ["Regime collapse", "Frozen conflict"],
+      "isNew": true
+    },
+    {
+      "headline": "France condemns strikes as illegal; Spain denies US military base access",
+      "summary": "President Macron said France cannot approve of strikes outside international law, while calling Iran primarily responsible. Spain denied the US use of bases at Rota and Morón, with PM Sánchez calling the war a 'big error.' No UN Security Council resolution has endorsed the US-Israeli strikes; China and Russia abstained on the March Gulf states resolution.",
+      "source": "Wikipedia / House of Commons Library",
+      "url": "https://en.wikipedia.org/wiki/Reactions_to_the_2026_Iran_war",
+      "date": "12 Apr 2026",
+      "tag": "diplomacy",
+      "region": "international",
+      "scenarios": ["Frozen conflict", "Extended ceasefire"],
+      "isNew": true
+    },
+    {
+      "headline": "South Korea hardest-hit non-combatant; Asian fuel rationing spreads as Hormuz stays shut",
+      "summary": "CSIS identified South Korea as the non-combatant country hit hardest by the conflict, facing both economic and political pressures from its energy exposure. Commercial traffic through the Strait of Hormuz fell more than 90% after hostilities began. Iran selectively approves passage for ships willing to pay a toll.",
+      "source": "CSIS",
+      "url": "https://www.csis.org/programs/latest-analysis-war-iran",
+      "date": "12 Apr 2026",
+      "tag": "economic",
+      "region": "international",
+      "scenarios": ["Frozen conflict", "Renewed escalation"],
+      "isNew": true
+    },
+    {
+      "headline": "Hormuz remains blocked — Iran freezes passage in response to Lebanon strikes",
+      "summary": "Iran paused Strait of Hormuz traffic citing continued Israeli attacks on Lebanon as a ceasefire violation. Shipping executives told CNN that uncertainty makes transit still too risky. Iran's new supreme leader Mojtaba Khamenei vowed to take Hormuz 'into a new phase' and pledged revenge for those killed in the war.",
+      "source": "CNN",
+      "url": "https://www.cnn.com/2026/04/09/world/live-news/iran-war-trump-us-ceasefire",
+      "date": "12 Apr 2026",
+      "tag": "economic",
+      "region": "iran",
+      "scenarios": ["Frozen conflict", "Renewed escalation"],
+      "isNew": true
+    }
+  ]
+}

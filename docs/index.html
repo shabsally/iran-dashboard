@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Iran Conflict — Intelligence Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:#0f1117; --bg2:#161a24; --bg3:#1c2130; --bg4:#222840;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13);
+  --text:#e8e6e0; --text2:#9a97a0; --text3:#5a576a;
+  --accent:#c8a96e; --accent2:#e8c87e;
+  --red:#d95f5f;   --red-bg:rgba(217,95,95,0.12);   --red-dim:rgba(217,95,95,0.25);
+  --amber:#d4943a; --amber-bg:rgba(212,148,58,0.12);
+  --green:#5a9e6f; --green-bg:rgba(90,158,111,0.12);
+  --blue:#5a8fc4;  --blue-bg:rgba(90,143,196,0.12);
+  --purple:#8b7fd4;--purple-bg:rgba(139,127,212,0.12);
+  --pink:#c46e8a;  --pink-bg:rgba(196,110,138,0.12);
+  --radius:8px; --radius-lg:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.6;min-height:100vh;}
+
+/* ── Layout ── */
+.shell{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+.main{flex:1;overflow-y:auto;padding:24px;background:var(--bg);}
+
+/* ── Sidebar ── */
+.sidebar-brand{padding:20px 18px 16px;border-bottom:1px solid var(--border);}
+.brand-name{font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:700;color:var(--accent);letter-spacing:.3px;line-height:1.3;}
+.brand-sub{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px;text-transform:uppercase;letter-spacing:.08em;}
+
+.sidebar-status{padding:12px 18px;border-bottom:1px solid var(--border);}
+.status-row{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.status-dot.pulse{animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.status-label{font-size:11px;color:var(--text2);}
+.status-val{font-size:11px;font-weight:500;font-family:'DM Mono',monospace;margin-left:auto;}
+
+/* refresh status bar */
+.refresh-bar{padding:10px 18px;border-bottom:1px solid var(--border);font-size:10px;font-family:'DM Mono',monospace;}
+.refresh-row{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.refresh-label{color:var(--text3);flex:1;}
+.refresh-val{color:var(--accent);}
+.refresh-btn{margin-top:6px;width:100%;padding:5px 10px;background:rgba(200,169,110,0.08);border:1px solid rgba(200,169,110,0.2);border-radius:6px;color:var(--accent);font-size:10px;font-family:'DM Mono',monospace;cursor:pointer;text-align:center;transition:background .15s;}
+.refresh-btn:hover{background:rgba(200,169,110,0.16);}
+.refresh-btn:disabled{opacity:.4;cursor:default;}
+
+.sidebar-nav{padding:10px;flex:1;}
+.nav-section-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;padding:8px 8px 4px;font-family:'DM Mono',monospace;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius);cursor:pointer;color:var(--text2);font-size:12px;transition:background .15s,color .15s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:var(--bg4);color:var(--accent);font-weight:500;}
+.nav-icon{width:14px;height:14px;flex-shrink:0;opacity:.7;}
+.nav-item.active .nav-icon{opacity:1;}
+
+.sidebar-footer{padding:12px 18px;border-top:1px solid var(--border);}
+.footer-btn{width:100%;padding:7px 12px;background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.25);border-radius:var(--radius);color:var(--accent);font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500;transition:background .15s;}
+.footer-btn:hover{background:rgba(200,169,110,0.18);}
+
+/* ── Main ── */
+.main-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.page-title{font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.2px;}
+.page-sub{font-size:12px;color:var(--text3);margin-top:3px;font-family:'DM Mono',monospace;}
+.header-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.badge{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:500;font-family:'DM Mono',monospace;letter-spacing:.04em;}
+.badge-live{background:var(--red-bg);color:var(--red);border:1px solid var(--red-dim);}
+.badge-day{background:var(--bg3);color:var(--text2);border:1px solid var(--border2);}
+.badge-warn{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(212,148,58,0.3);}
+
+/* ── Metrics ── */
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px;}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.metric-label{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.metric-val{font-size:18px;font-weight:600;font-family:'Playfair Display',serif;}
+.metric-val.red{color:var(--red);} .metric-val.amber{color:var(--amber);} .metric-val.green{color:var(--green);}
+.metric-sub{font-size:10px;color:var(--text3);margin-top:3px;}
+
+/* ── Panels ── */
+.panel{display:none;} .panel.active{display:block;}
+
+/* ── Cards ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:14px;}
+.card-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-family:'DM Mono',monospace;margin-bottom:14px;}
+
+/* ── Scenarios ── */
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.sc-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;cursor:pointer;transition:border-color .15s,background .15s;}
+.sc-card:hover{border-color:var(--border2);background:var(--bg4);}
+.sc-card.selected{border-width:1.5px;}
+.sc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;}
+.sc-name{font-size:13px;font-weight:500;color:var(--text);line-height:1.3;}
+.prob-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;font-family:'DM Mono',monospace;white-space:nowrap;}
+.sc-desc{font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:10px;}
+.sc-bar-wrap{height:3px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;}
+.sc-bar{height:100%;border-radius:3px;transition:width .4s ease;}
+.detail-card{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:14px;}
+.detail-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);gap:12px;}
+.detail-row:last-child{border:none;}
+.detail-key{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;padding-top:2px;min-width:130px;}
+.detail-val{font-size:11px;color:var(--text);text-align:right;flex:1;line-height:1.4;}
+.impact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;}
+.impact-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px;}
+.impact-card h4{font-size:10px;font-weight:500;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.impact-item{font-size:11px;color:var(--text2);padding:3px 0;border-bottom:1px solid var(--border);line-height:1.4;}
+.impact-item:last-child{border:none;}
+
+/* ── Charts ── */
+.chart-tabs{display:flex;gap:4px;margin-bottom:14px;}
+.chart-tab{font-size:11px;padding:4px 12px;border:1px solid var(--border);border-radius:14px;background:none;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .15s;}
+.chart-tab.active{background:var(--bg4);color:var(--accent);border-color:rgba(200,169,110,0.3);}
+.chart-panel{display:none;} .chart-panel.active{display:block;}
+.chart-wrap{height:240px;position:relative;}
+.hm-grid{display:grid;grid-template-columns:170px repeat(4,1fr);gap:3px;font-size:11px;}
+.hm-hdr{background:var(--bg3);padding:6px 8px;border-radius:4px;font-size:10px;color:var(--text3);text-align:center;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.05em;}
+.hm-row-label{background:var(--bg3);padding:7px 8px;border-radius:4px;color:var(--text2);display:flex;align-items:center;gap:6px;line-height:1.3;}
+.hm-cell{padding:7px 8px;border-radius:4px;text-align:center;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;min-height:36px;}
+.donut-layout{display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:center;}
+.donut-legend-list{display:flex;flex-direction:column;gap:7px;}
+.dl-row{display:flex;align-items:center;gap:8px;}
+.dl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dl-label{font-size:11px;color:var(--text2);flex:1;}
+.dl-val{font-size:11px;font-weight:500;font-family:'DM Mono',monospace;color:var(--text);}
+
+/* Sliders */
+.slider-row{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+.slider-label{font-size:12px;color:var(--text2);min-width:175px;line-height:1.3;display:flex;align-items:center;gap:6px;}
+input[type=range]{flex:1;accent-color:var(--accent);}
+.slider-val{font-size:11px;font-weight:500;min-width:34px;text-align:right;font-family:'DM Mono',monospace;color:var(--accent);}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid var(--border);margin-top:4px;}
+.total-label{font-size:11px;color:var(--text3);}
+.total-val{font-size:13px;font-weight:600;font-family:'DM Mono',monospace;}
+.action-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.btn{font-size:12px;padding:7px 16px;border:1px solid var(--border2);border-radius:var(--radius);background:none;cursor:pointer;color:var(--text);font-family:'DM Sans',sans-serif;transition:background .15s;}
+.btn:hover{background:var(--bg3);}
+.btn-gold{background:rgba(200,169,110,0.12);border-color:rgba(200,169,110,0.3);color:var(--accent);}
+.btn-gold:hover{background:rgba(200,169,110,0.2);}
+
+/* ── News ── */
+.filter-row{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
+.filter-btn{font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:12px;background:none;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .12s;}
+.filter-btn.active{background:var(--bg4);color:var(--accent);border-color:rgba(200,169,110,0.3);}
+.news-list{display:flex;flex-direction:column;gap:8px;}
+.news-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;cursor:pointer;transition:border-color .12s;}
+.news-item:hover{border-color:var(--border2);}
+.news-item.open{border-color:rgba(200,169,110,0.3);}
+.news-meta{display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap;}
+.news-source{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;}
+.news-dot{width:3px;height:3px;border-radius:50%;background:var(--text3);}
+.news-date{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;}
+.region-tag{font-size:10px;padding:1px 7px;border-radius:9px;font-weight:500;}
+.news-tag-pill{font-size:10px;padding:1px 7px;border-radius:9px;font-weight:500;margin-left:auto;}
+.tag-diplomacy{background:var(--blue-bg);color:var(--blue);}
+.tag-military{background:var(--red-bg);color:var(--red);}
+.tag-economic{background:var(--amber-bg);color:var(--amber);}
+.tag-humanitarian{background:var(--green-bg);color:var(--green);}
+.tag-nuclear{background:var(--purple-bg);color:var(--purple);}
+.region-lebanon{background:var(--pink-bg);color:var(--pink);}
+.region-gulf{background:var(--amber-bg);color:var(--amber);}
+.region-iran{background:var(--red-bg);color:var(--red);}
+.region-international{background:var(--blue-bg);color:var(--blue);}
+.region-humanitarian{background:var(--green-bg);color:var(--green);}
+.news-headline{font-size:13px;font-weight:500;color:var(--text);line-height:1.4;margin-bottom:5px;}
+.news-body{font-size:12px;color:var(--text2);line-height:1.6;display:none;margin-bottom:8px;}
+.news-body.open{display:block;}
+.news-footer{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:5px;}
+.sc-pill{font-size:10px;padding:1px 7px;border-radius:7px;background:var(--bg4);color:var(--text3);border:1px solid var(--border);}
+.new-pill{font-size:10px;padding:1px 7px;border-radius:7px;background:var(--green-bg);color:var(--green);font-weight:500;}
+.read-link{font-size:10px;color:var(--blue);text-decoration:none;margin-left:auto;}
+.news-loading{text-align:center;padding:32px;color:var(--text3);font-family:'DM Mono',monospace;font-size:11px;}
+.news-error{background:var(--red-bg);border:1px solid var(--red-dim);border-radius:var(--radius);padding:10px 14px;font-size:11px;color:var(--red);margin-bottom:12px;}
+
+/* ── Timeline ── */
+.tl-item{display:flex;gap:14px;}
+.tl-left{display:flex;flex-direction:column;align-items:center;width:28px;}
+.tl-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.tl-line{width:1px;flex:1;background:var(--border);margin:3px 0;}
+.tl-right{padding-bottom:16px;flex:1;}
+.tl-date{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;}
+.tl-title{font-size:13px;font-weight:500;color:var(--text);margin:2px 0;}
+.tl-body{font-size:11px;color:var(--text2);line-height:1.5;}
+
+/* ── Sentiment ── */
+.aud-tabs{display:flex;gap:4px;margin-bottom:14px;}
+.aud-tab{font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:12px;background:none;cursor:pointer;color:var(--text2);font-family:'DM Sans',sans-serif;transition:all .12s;}
+.aud-tab.active{background:var(--bg4);color:var(--accent);border-color:rgba(200,169,110,0.3);}
+.sent-bars{display:flex;flex-direction:column;gap:9px;margin-bottom:18px;}
+.sent-row{display:flex;align-items:center;gap:9px;}
+.sent-label{font-size:11px;color:var(--text2);min-width:155px;}
+.sent-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;}
+.sent-bar{height:100%;border-radius:3px;transition:width .5s ease;}
+.sent-pct{font-size:11px;font-weight:500;min-width:32px;text-align:right;font-family:'DM Mono',monospace;color:var(--text);}
+.narr-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.narr-card{border-radius:var(--radius);padding:10px 12px;}
+.narr-title{font-size:11px;font-weight:500;margin-bottom:4px;}
+.narr-body{font-size:11px;color:var(--text2);line-height:1.5;}
+.signal-list{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+.signal-item{display:flex;gap:8px;align-items:flex-start;}
+.sig-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.sig-text{font-size:11px;color:var(--text2);line-height:1.5;}
+.sig-text strong{color:var(--text);font-weight:500;}
+.meme-row{display:flex;gap:5px;flex-wrap:wrap;}
+.meme-pill{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--bg3);color:var(--text3);border:1px solid var(--border);}
+.meme-pill.hot{border-color:rgba(212,148,58,0.3);color:var(--amber);background:var(--amber-bg);}
+.section-lbl{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-family:'DM Mono',monospace;margin-bottom:8px;}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+.disclaimer{font-size:10px;color:var(--text3);line-height:1.5;}
+
+@media(max-width:900px){.sc-grid{grid-template-columns:1fr 1fr;}.metrics{grid-template-columns:repeat(3,1fr);}.impact-grid{grid-template-columns:1fr 1fr;}.sidebar{width:180px;}}
+@media(max-width:650px){.shell{flex-direction:column;height:auto;}.sidebar{width:100%;height:auto;border-right:none;border-bottom:1px solid var(--border);}.main{height:auto;}.sc-grid,.narr-grid{grid-template-columns:1fr;}.metrics{grid-template-columns:repeat(2,1fr);}.donut-layout{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-name">Iran Conflict<br>Intelligence</div>
+    <div class="brand-sub" id="day-label">Loading…</div>
+  </div>
+
+  <div class="sidebar-status">
+    <div class="status-row">
+      <div class="status-dot pulse" style="background:var(--red)"></div>
+      <span class="status-label">Ceasefire expires</span>
+      <span class="status-val" style="color:var(--amber)">Apr 21</span>
+    </div>
+    <div class="status-row">
+      <div class="status-dot pulse" style="background:var(--red)"></div>
+      <span class="status-label">Hormuz</span>
+      <span class="status-val" style="color:var(--red)">Blocked</span>
+    </div>
+    <div class="status-row">
+      <div class="status-dot" style="background:var(--amber)"></div>
+      <span class="status-label">Islamabad talks</span>
+      <span class="status-val" style="color:var(--red)">Collapsed</span>
+    </div>
+    <div class="status-row">
+      <div class="status-dot pulse" style="background:var(--amber)"></div>
+      <span class="status-label">Lebanon war</span>
+      <span class="status-val" style="color:var(--red)">Ongoing</span>
+    </div>
+  </div>
+
+  <!-- News refresh status -->
+  <div class="refresh-bar">
+    <div class="refresh-row">
+      <span class="refresh-label">Last news fetch</span>
+      <span class="refresh-val" id="last-fetch-label">—</span>
+    </div>
+    <div class="refresh-row">
+      <span class="refresh-label">Next auto-refresh</span>
+      <span class="refresh-val" id="next-refresh-label">—</span>
+    </div>
+    <button class="refresh-btn" id="manual-refresh-btn" onclick="fetchNews(true)">↻ Refresh now</button>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Analysis</div>
+    <button class="nav-item active" onclick="goNav('scenarios',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+      Scenarios
+    </button>
+    <button class="nav-item" onclick="goNav('charts',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><path d="M2 12L5 7 8 9 11 4 14 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Probability charts
+    </button>
+    <button class="nav-item" onclick="goNav('sentiment',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 9.5Q8 11.5 10.5 9.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="5.5" cy="7" r=".8" fill="currentColor"/><circle cx="10.5" cy="7" r=".8" fill="currentColor"/></svg>
+      Sentiment
+    </button>
+    <div class="nav-section-label">Intelligence</div>
+    <button class="nav-item" onclick="goNav('news',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      News feed
+    </button>
+    <button class="nav-item" onclick="goNav('timeline',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Timeline
+    </button>
+    <div class="nav-section-label">Settings</div>
+    <button class="nav-item" onclick="goNav('customize',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Customize
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    <button class="footer-btn" onclick="exportJSON()">Export JSON ↗</button>
+  </div>
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+  <div class="main-header">
+    <div>
+      <div class="page-title" id="page-title">Scenario analysis</div>
+      <div class="page-sub" id="page-sub">6 modelled outcomes · click any card to expand</div>
+    </div>
+    <div class="header-badges">
+      <span class="badge badge-live">● LIVE</span>
+      <span class="badge badge-day" id="date-badge">Apr 12, 2026</span>
+      <span class="badge badge-warn">Ceasefire exp. Apr 21</span>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Ceasefire</div><div class="metric-val amber">Apr 21</div><div class="metric-sub" id="countdown-sub">calculating…</div></div>
+    <div class="metric"><div class="metric-label">Hormuz</div><div class="metric-val red">Blocked</div><div class="metric-sub">Iran controlling passage</div></div>
+    <div class="metric"><div class="metric-label">Islamabad</div><div class="metric-val red">No deal</div><div class="metric-sub">Talks collapsed Apr 12</div></div>
+    <div class="metric"><div class="metric-label">Lebanon displaced</div><div class="metric-val red">1M+</div><div class="metric-sub">600K from south alone</div></div>
+    <div class="metric"><div class="metric-label">Consumer sentiment</div><div class="metric-val red">47.6</div><div class="metric-sub">Record low · Univ. Michigan</div></div>
+  </div>
+
+  <!-- SCENARIOS -->
+  <div class="panel active" id="panel-scenarios">
+    <div class="sc-grid" id="sc-grid"></div>
+    <div id="sc-detail"></div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="panel" id="panel-charts">
+    <div class="card">
+      <div class="chart-tabs">
+        <button class="chart-tab active" onclick="switchChart('bar',this)">Bar chart</button>
+        <button class="chart-tab" onclick="switchChart('donut',this)">Donut</button>
+        <button class="chart-tab" onclick="switchChart('heatmap',this)">Impact heat map</button>
+      </div>
+      <div class="chart-panel active" id="cp-bar"><div class="chart-wrap"><canvas id="barChart"></canvas></div></div>
+      <div class="chart-panel" id="cp-donut">
+        <div class="donut-layout">
+          <div class="chart-wrap" style="height:200px;"><canvas id="donutChart"></canvas></div>
+          <div class="donut-legend-list" id="donut-legend"></div>
+        </div>
+      </div>
+      <div class="chart-panel" id="cp-heatmap">
+        <div class="hm-grid" id="hm-grid"></div>
+        <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;">
+          <span style="font-size:10px;color:var(--text3)">Impact:</span>
+          <span style="font-size:10px;color:var(--green)">■ Low</span>
+          <span style="font-size:10px;color:var(--amber)">■ Medium</span>
+          <span style="font-size:10px;color:var(--red)">■ High</span>
+          <span style="font-size:10px;color:#c46e8a">■ Critical</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SENTIMENT -->
+  <div class="panel" id="panel-sentiment">
+    <div class="card">
+      <div class="card-title">Public sentiment by audience · sourced from ACLED, NIAC, Euronews, CNBC</div>
+      <div class="aud-tabs">
+        <button class="aud-tab active" onclick="switchAud('global',this)">Global</button>
+        <button class="aud-tab" onclick="switchAud('iran',this)">Iranian public</button>
+        <button class="aud-tab" onclick="switchAud('gulf',this)">Gulf region</button>
+        <button class="aud-tab" onclick="switchAud('western',this)">Western</button>
+      </div>
+      <div class="sent-bars" id="sent-bars"></div>
+      <div class="divider"></div>
+      <div class="section-lbl">Dominant narratives</div>
+      <div class="narr-grid">
+        <div class="narr-card" style="background:var(--blue-bg);border:1px solid rgba(90,143,196,0.2)"><div class="narr-title" style="color:var(--blue)">Pro-Western / pro-strike</div><div class="narr-body">Gaming clips, superhero memes, dominance humour from US gov accounts. Frames war as controlled and winnable. Strongest among Western right-wing audiences.</div></div>
+        <div class="narr-card" style="background:var(--red-bg);border:1px solid rgba(217,95,95,0.2)"><div class="narr-title" style="color:var(--red)">Pro-Iran / resistance</div><div class="narr-body">Lego-Trump videos (700K+ views), Minab school imagery, Epstein counter-messaging. Targeting Western anti-war sentiment across fragmented audiences.</div></div>
+        <div class="narr-card" style="background:var(--green-bg);border:1px solid rgba(90,158,111,0.2)"><div class="narr-title" style="color:var(--green)">Anti-war / ceasefire</div><div class="narr-body">Driven by civilian casualty footage and UNICEF data. Strongest in Europe. 61.6% of Iranian-Americans favour diplomacy over military escalation (NIAC poll).</div></div>
+        <div class="narr-card" style="background:var(--amber-bg);border:1px solid rgba(212,148,58,0.2)"><div class="narr-title" style="color:var(--amber)">Disinfo / deepfakes</div><div class="narr-body">AI-generated videos from both sides. Netanyahu "sixth finger" deepfake circulated widely. Experts warn deepfakes have crossed a "critical threshold" — glitches eliminated.</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-lbl">Key signals</div>
+      <div class="signal-list">
+        <div class="signal-item"><div class="sig-dot" style="background:var(--red)"></div><div class="sig-text"><strong>Inside Iran:</strong> Security forces fired on street celebrants after Khamenei's death. Khomeini monument toppled Mar 1. State media shows pro-government rallies; independent footage shows celebrations.</div></div>
+        <div class="signal-item"><div class="sig-dot" style="background:var(--amber)"></div><div class="sig-text"><strong>Iranian diaspora:</strong> NIAC poll — 49.3% oppose strikes, 48.9% support. Nearly 50/50 split reflects deep fracture in diaspora identity.</div></div>
+        <div class="signal-item"><div class="sig-dot" style="background:var(--green)"></div><div class="sig-text"><strong>Gulf public:</strong> Kuwait Emir expressed shock at being attacked by a "Muslim country they consider a friend." Public sentiment broadly favours de-escalation.</div></div>
+        <div class="signal-item"><div class="sig-dot" style="background:var(--blue)"></div><div class="sig-text"><strong>Western consumers:</strong> University of Michigan index hit record low of 47.6, down 10.7% from March. Survey comments directly blame the Iran conflict for economic anxiety and rising inflation.</div></div>
+        <div class="signal-item"><div class="sig-dot" style="background:var(--purple)"></div><div class="sig-text"><strong>Memetic warfare:</strong> Both sides using AI content at scale. Expert: "deepfakes have crossed a critical threshold — tell-tale glitches eliminated, accessible to anyone."</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-lbl">Trending themes</div>
+      <div class="meme-row">
+        <span class="meme-pill hot">#OperationEpsteinFury</span><span class="meme-pill hot">#MinabSchool</span><span class="meme-pill hot">#LegoTrump</span><span class="meme-pill hot">#OpenTheStrait</span><span class="meme-pill">#IranWar</span><span class="meme-pill">#CeasefireNow</span><span class="meme-pill">#HormuzCrisis</span><span class="meme-pill">#IranianDiaspora</span>
+      </div>
+      <div class="divider"></div>
+      <div class="disclaimer">Sentiment estimates derived from ACLED event analysis, NIAC polling, University of Michigan survey, Euronews, CNBC, and Wikipedia research. Not real-time social listening data. Figures are indicative.</div>
+    </div>
+  </div>
+
+  <!-- NEWS -->
+  <div class="panel" id="panel-news">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+        <div class="card-title" style="margin-bottom:0">Regional news feed</div>
+        <span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3)" id="news-fetch-label">Loading…</span>
+      </div>
+      <div id="news-error" class="news-error" style="display:none"></div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="filterNews('all',this)">All</button>
+        <button class="filter-btn" onclick="filterNews('lebanon',this)">Lebanon</button>
+        <button class="filter-btn" onclick="filterNews('gulf',this)">Gulf states</button>
+        <button class="filter-btn" onclick="filterNews('iran',this)">Iran</button>
+        <button class="filter-btn" onclick="filterNews('international',this)">International</button>
+        <button class="filter-btn" onclick="filterNews('humanitarian',this)">Humanitarian</button>
+        <button class="filter-btn" onclick="filterNews('diplomacy',this)">Diplomacy</button>
+        <button class="filter-btn" onclick="filterNews('economic',this)">Economic</button>
+        <button class="filter-btn" onclick="filterNews('military',this)">Military</button>
+      </div>
+      <div class="news-list" id="news-list"><div class="news-loading">Fetching latest articles…</div></div>
+    </div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="panel" id="panel-timeline">
+    <div class="card"><div class="card-title">Conflict timeline</div><div id="tl-list"></div></div>
+  </div>
+
+  <!-- CUSTOMIZE -->
+  <div class="panel" id="panel-customize">
+    <div class="card">
+      <div class="card-title">Adjust scenario probabilities</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:16px;">Drag sliders to update your probability assessments. Apply to refresh all charts and scenario cards.</p>
+      <div id="sliders"></div>
+      <div class="total-row"><span class="total-label">Total assigned</span><span class="total-val" id="total-val">100%</span></div>
+      <div class="action-row">
+        <button class="btn btn-gold" onclick="applyProbs()">Apply to all views</button>
+        <button class="btn" onclick="resetProbs()">Reset defaults</button>
+        <button class="btn" onclick="exportJSON()">Export JSON</button>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+// ⚠️  Set this to your GitHub Pages URL once deployed, e.g.:
+//     "https://yourusername.github.io/iran-dashboard/news.json"
+// For local testing, keep as "./news.json"
+const NEWS_JSON_URL = "./news.json";
+
+const UK_TZ = "Europe/London";
+const REFRESH_HOUR_UK = 7; // 07:00 UK time
+
+// ─── SCENARIO DATA ────────────────────────────────────────────────────────────
+const SC = [
+  { id:'peace',     name:'Negotiated peace deal', prob:25, color:'green',  hex:'#5a9e6f',
+    desc:'Islamabad talks resume and succeed. Permanent ceasefire, Hormuz reopens, nuclear framework agreed.',
+    timeline:'4–8 weeks', oil:'Brent falls $85–90', regime:'IRGC weakened, regime survives', mil:'US withdrawal begins Q3 2026',
+    triggers:['Talks resume after collapse','Lebanon ceasefire brokered separately','Iran softens nuclear demand'],
+    risks:['Hezbollah spoiler attacks','IRGC hard-liner rejection','Congressional war powers challenge'],
+    impacts:{ Geopolitical:['Gulf states rebuild ties','China influence reduced','Pakistan as broker'],
+              Economic:['Hormuz reopens — oil normalises','Aviation recovers 4–6 weeks','Gulf GDP recovers Q4'],
+              Military:['US forces redeploy','Iran retains partial missile capability','Hezbollah ceasefire fragile'] },
+    hm:{oil:1,regime:1,mil:2,human:1} },
+  { id:'frozen',    name:'Frozen conflict',        prob:45, color:'amber',  hex:'#d4943a',
+    desc:'Ceasefire extended but talks stall. Hormuz partially open under Iranian tolling. Shadow war continues.',
+    timeline:'2–6 months stalemate', oil:'Brent stays $95–110', regime:'Mojtaba Khamenei consolidates', mil:'Sustained Gulf presence',
+    triggers:['Apr 21 ceasefire extended','Iran insists on Lebanon inclusion','China arms transfer stalls talks'],
+    risks:['Proxy escalation resumes','European jet fuel crisis','Iran covert nuclear rebuild'],
+    impacts:{ Geopolitical:['UAE-Iran tensions remain','Turkey faces NATO pressure','Russian mediation attempts'],
+              Economic:['Shipping costs elevated','South Korea / Asia fuel crunch','US inflation stays high'],
+              Military:['Hezbollah-Israel low-intensity war','Houthi Red Sea attacks resume','IRGC rebuilds'] },
+    hm:{oil:2,regime:2,mil:2,human:2} },
+  { id:'escalation',name:'Renewed escalation',     prob:22, color:'red',    hex:'#d95f5f',
+    desc:'April 21 deadline passes. US resumes strikes. Iran closes Hormuz entirely. China delivers air defence.',
+    timeline:'Post Apr 21', oil:'Brent spikes $140+', regime:'Regime survival uncertain', mil:'Major new offensive',
+    triggers:['Talks formally collapse','China arms transfer confirmed','Lebanon offensive triggers walkout'],
+    risks:['Global recession from oil shock','Nuclear breakout attempt','Turkey Article 5 invoked'],
+    impacts:{ Geopolitical:['China-US confrontation risk','NATO unity tested','Russia opportunistic moves'],
+              Economic:['Global oil shock','Aviation collapse in MENA','US inflation 3-year high'],
+              Military:['US strikes Iranian power grid','Nuclear sites targeted','Full Hezbollah war resumes'] },
+    hm:{oil:3,regime:3,mil:3,human:3} },
+  { id:'regime',    name:'Regime collapse',         prob:4,  color:'pink',   hex:'#c46e8a',
+    desc:'Protests + military defeats fracture IRGC. Transitional council attempts takeover.',
+    timeline:'3–12 months', oil:'Extreme volatility $60–150', regime:'Islamic Republic ends', mil:'Nation-building scenario',
+    triggers:['IRGC fractures','Protest death toll surpasses 30K','Mojtaba loses military loyalty'],
+    risks:['Nuclear material security risk','Sectarian violence','Prolonged US presence'],
+    impacts:{ Geopolitical:['Regional power vacuum','Hezbollah loses patron','Israel achieves strategic goal'],
+              Economic:['Oil spike then crash','Iran reconstruction $500B+','Gulf investment boom'],
+              Military:['IRGC weapons proliferation','Nuclear security critical','US occupation costs'] },
+    hm:{oil:4,regime:4,mil:3,human:4} },
+  { id:'nuclear',   name:'Nuclear breakout risk',   prob:3,  color:'purple', hex:'#8b7fd4',
+    desc:'Iran accelerates covert enrichment under cover of war. Breakout window narrows to weeks.',
+    timeline:'6–18 months undetected', oil:'Existential — market freeze', regime:'Hard-liners in control', mil:'Bunker-buster option active',
+    triggers:['Iran rejects all IAEA access','Covert facility discovered','Enrichment surpasses 90%'],
+    risks:['Israeli strike on nuclear sites','Radiological accident','Saudi nuclear programme'],
+    impacts:{ Geopolitical:['ME nuclear arms race','NPT framework collapses','US-China confrontation'],
+              Economic:['Permanent Hormuz risk premium','Insurance markets freeze','SWIFT exclusions extended'],
+              Military:['B-2 bunker-buster deployments','Trident repositioned','Saudi nuclear umbrella request'] },
+    hm:{oil:4,regime:3,mil:4,human:3} },
+  { id:'ceasefire', name:'Extended ceasefire',      prob:1,  color:'green',  hex:'#5a9e6f',
+    desc:'Two-week pause extended repeatedly. Talks drag 6+ months. No resolution, no major escalation.',
+    timeline:'6–12 months limbo', oil:'Brent stabilises $90–100', regime:'New leader consolidates', mil:'Reduced tempo, standby',
+    triggers:['Neither side wants full war','Pakistan sustained broker','Trump domestic focus'],
+    risks:['Proxy war in Lebanon continues','Iran nuclear time-buying','US public opinion shifts'],
+    impacts:{ Geopolitical:['Regional fatigue','Arab states hedge with China','Turkey gains NATO leverage'],
+              Economic:['Oil uncertainty persists','Shipping insurance normalises slowly','Gulf airlines reroute'],
+              Military:['Low-level strikes continue','Hezbollah rearming','Houthis regroup'] },
+    hm:{oil:1,regime:2,mil:1,human:2} },
+];
+
+const TL = [
+  {date:'Feb 24, 2026',dot:'#d95f5f',title:'Trump accuses Iran in State of the Union',body:'Warns US prepared to act if Iran continues advancing nuclear and ballistic missile programs.'},
+  {date:'Feb 28, 2026',dot:'#d95f5f',title:'Operation Epic Fury — conflict begins',body:'US-Israeli strikes. Khamenei killed. IRIS Fateh submarine sunk — first submarine sunk in conflict since Falklands War. Hormuz closed.'},
+  {date:'Mar 1, 2026',dot:'#d95f5f',title:'Iran launches mass retaliation',body:'Hundreds of drones and missiles hit Israel, US bases, Gulf states. Dubai airport struck. 660+ strike events across the Gulf region.'},
+  {date:'Mar 3, 2026',dot:'#d4943a',title:'Mojtaba Khamenei appointed supreme leader',body:'Iran rapidly replaces leadership. Mojtaba, considered more hawkish, takes power despite US/Israeli protests.'},
+  {date:'Mar 17, 2026',dot:'#d95f5f',title:'Israel assassinates Ali Larijani',body:'Secretary of Iran\'s Supreme National Security Council killed. Caused deep anxiety among Iranian officials about systematic leadership targeting.'},
+  {date:'Mar 18, 2026',dot:'#d95f5f',title:'Israel strikes South Pars; Iran retaliates against Qatar LNG',body:'Iran attacks world\'s largest LNG facility in Qatar, wiping out ~17% of Qatar\'s LNG capacity for up to five years.'},
+  {date:'Apr 6, 2026',dot:'#d95f5f',title:'IRGC intelligence chief assassinated',body:'Major General Majid Khademi killed in joint US-Israeli strike — latest in a series of Iranian leadership decapitations.'},
+  {date:'Apr 7–8, 2026',dot:'#5a9e6f',title:'Two-week ceasefire agreed',body:'US, Iran agree to two-week pause mediated by Pakistan. Lebanon excluded. Hormuz partially reopened under Iranian coordination conditions.'},
+  {date:'Apr 10–12, 2026',dot:'#d4943a',title:'Islamabad talks collapse — no deal',body:'21 hours of negotiations fail. Iran submits 10-point maximalist plan. Vance returns without agreement.'},
+  {date:'Apr 21, 2026',dot:'#d4943a',title:'Ceasefire expiry deadline',body:'Current two-week ceasefire expires. No deal reached. Renewed escalation or extended limbo the most likely outcomes.'},
+];
+
+const AUDIENCES = {
+  global:  [{label:'Anti-war / ceasefire',pct:38,hex:'#5a9e6f'},{label:'Pro-Western strikes',pct:27,hex:'#5a8fc4'},{label:'Pro-Iran resistance',pct:21,hex:'#d95f5f'},{label:'Neutral / uninformed',pct:14,hex:'#5a576a'}],
+  iran:    [{label:'Anti-regime / pro-strike',pct:44,hex:'#5a9e6f'},{label:'Pro-government',pct:28,hex:'#d95f5f'},{label:'Anti-war (all sides)',pct:19,hex:'#d4943a'},{label:'Uncertain / silent',pct:9,hex:'#5a576a'}],
+  gulf:    [{label:'De-escalation / neutral',pct:46,hex:'#d4943a'},{label:'Anti-Iran',pct:33,hex:'#5a8fc4'},{label:'Pro-Iran solidarity',pct:12,hex:'#d95f5f'},{label:'Uncertain',pct:9,hex:'#5a576a'}],
+  western: [{label:'Anti-war / economic concern',pct:41,hex:'#5a9e6f'},{label:'Pro-strike / hawkish',pct:31,hex:'#5a8fc4'},{label:'Pro-Iran resistance',pct:14,hex:'#d95f5f'},{label:'Disengaged',pct:14,hex:'#5a576a'}],
+};
+
+const colorMap = {
+  green:{badge:'rgba(90,158,111,0.15)',badgeText:'#5a9e6f',border:'#5a9e6f'},
+  amber:{badge:'rgba(212,148,58,0.15)',badgeText:'#d4943a',border:'#d4943a'},
+  red:{badge:'rgba(217,95,95,0.15)',badgeText:'#d95f5f',border:'#d95f5f'},
+  pink:{badge:'rgba(196,110,138,0.15)',badgeText:'#c46e8a',border:'#c46e8a'},
+  purple:{badge:'rgba(139,127,212,0.15)',badgeText:'#8b7fd4',border:'#8b7fd4'},
+};
+
+let customProbs = SC.map(s=>s.prob);
+let activeScId = null;
+let newsFilter = 'all';
+let allArticles = [];
+let barChart, donutChart;
+
+// ─── UK TIME HELPERS ──────────────────────────────────────────────────────────
+function ukNow() { return new Date(new Date().toLocaleString('en-GB',{timeZone:UK_TZ})); }
+function ukDateStr() { const d=ukNow(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function nextRefreshLabel() {
+  const n=ukNow(), h=n.getHours(), m=n.getMinutes();
+  let diff=REFRESH_HOUR_UK*60-(h*60+m);
+  if(diff<=0) diff+=1440;
+  return `${Math.floor(diff/60)}h ${diff%60}m`;
+}
+function fmtTs(iso) {
+  if(!iso) return '—';
+  return new Date(iso).toLocaleString('en-GB',{timeZone:UK_TZ,day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+' BST';
+}
+
+// ─── CLOCK & COUNTDOWN ────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('date-badge').textContent = now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('day-label').textContent = 'Conflict intelligence · '+now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('next-refresh-label').textContent = nextRefreshLabel();
+
+  // countdown to Apr 21 ceasefire expiry
+  const expiry = new Date('2026-04-21T00:00:00Z');
+  const diff = expiry - now;
+  if(diff > 0) {
+    const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000);
+    document.getElementById('countdown-sub').textContent = `${d}d ${h}h remaining`;
+  } else {
+    document.getElementById('countdown-sub').textContent = 'Deadline passed';
+  }
+
+  // auto-trigger at 07:00 UK
+  if(ukNow().getHours()===REFRESH_HOUR_UK && ukNow().getMinutes()===0) {
+    fetchNews(false);
+  }
+}
+
+// ─── NEWS FETCH ───────────────────────────────────────────────────────────────
+async function fetchNews(force) {
+  const btn = document.getElementById('manual-refresh-btn');
+  btn.disabled = true;
+  btn.textContent = '↻ Fetching…';
+
+  // Check localStorage cache
+  const cached = (() => { try { const r=localStorage.getItem('iran_news_cache'); return r?JSON.parse(r):null; } catch(e){return null;} })();
+  if(!force && cached && cached.fetchedOn===ukDateStr() && cached.articles?.length) {
+    renderNewsFromCache(cached, false);
+    btn.disabled=false; btn.textContent='↻ Refresh now';
+    return;
+  }
+
+  try {
+    const resp = await fetch(NEWS_JSON_URL+'?t='+Date.now()); // cache-bust
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    localStorage.setItem('iran_news_cache', JSON.stringify(data));
+    renderNewsFromCache(data, true);
+  } catch(err) {
+    if(cached?.articles?.length) {
+      renderNewsFromCache(cached, false);
+      showNewsError('Could not reach news.json — showing cached articles. '+err.message);
+    } else {
+      document.getElementById('news-list').innerHTML='<div class="news-loading">Could not load articles. Check that news.json is deployed.</div>';
+      showNewsError(err.message);
+    }
+  }
+
+  btn.disabled=false; btn.textContent='↻ Refresh now';
+}
+
+function renderNewsFromCache(data, fresh) {
+  allArticles = data.articles || [];
+  document.getElementById('last-fetch-label').textContent = fmtTs(data.fetchedAt);
+  document.getElementById('news-fetch-label').textContent =
+    (fresh?'Live · ':'Cached · ')+allArticles.length+' articles · fetched '+fmtTs(data.fetchedAt);
+  hideNewsError();
+  renderNews();
+}
+
+function showNewsError(msg) { const e=document.getElementById('news-error'); e.textContent=msg; e.style.display='block'; }
+function hideNewsError() { document.getElementById('news-error').style.display='none'; }
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function goNav(id, el) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  el.classList.add('active');
+  const titles={scenarios:'Scenario analysis',charts:'Probability charts',sentiment:'Social media sentiment',news:'Regional news feed',timeline:'Conflict timeline',customize:'Customize probabilities'};
+  const subs={scenarios:'6 modelled outcomes · click any card to expand',charts:'Visual breakdown of scenario probabilities and impacts',sentiment:'Cross-platform signal analysis · sourced from ACLED, NIAC, Euronews',news:'Auto-refreshes daily at 07:00 UK time · regional focus',timeline:'Key events from Feb 28 to Apr 21 ceasefire deadline',customize:'Adjust scenario weights and apply to all views'};
+  document.getElementById('page-title').textContent=titles[id];
+  document.getElementById('page-sub').textContent=subs[id];
+  if(id==='charts') setTimeout(()=>{initBarChart();initDonutChart();initHeatmap();},50);
+}
+
+// ─── SCENARIOS ────────────────────────────────────────────────────────────────
+function renderScenarios() {
+  document.getElementById('sc-grid').innerHTML = SC.map((s,i)=>{
+    const p=customProbs[i], c=colorMap[s.color], sel=activeScId===s.id;
+    return `<div class="sc-card ${sel?'selected':''}" onclick="selectSc('${s.id}')" style="${sel?'border-color:'+c.border+';background:var(--bg4)':''}">
+      <div class="sc-header"><span class="sc-name">${s.name}</span><span class="prob-badge" style="background:${c.badge};color:${c.badgeText}">${p}%</span></div>
+      <p class="sc-desc">${s.desc}</p>
+      <div class="sc-bar-wrap"><div class="sc-bar" style="width:${Math.min(p,100)}%;background:${s.hex}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function selectSc(id) {
+  activeScId = activeScId===id?null:id;
+  renderScenarios();
+  const det=document.getElementById('sc-detail');
+  if(!activeScId){det.innerHTML='';return;}
+  const s=SC.find(x=>x.id===id), i=SC.indexOf(s), c=colorMap[s.color];
+  det.innerHTML=`<div class="detail-card" style="border-color:${c.border}40">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <span style="font-size:14px;font-weight:600;color:${c.badgeText};font-family:'Playfair Display',serif">${s.name}</span>
+      <span class="prob-badge" style="background:${c.badge};color:${c.badgeText};font-size:13px">${customProbs[i]}% probability</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
+      ${[['Timeline',s.timeline],['Oil impact',s.oil],['Regime outcome',s.regime],['US military',s.mil],
+         ['Key triggers',s.triggers.join(' · ')],['Key risks',s.risks.join(' · ')]
+        ].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+    </div>
+    <div class="impact-grid">
+      ${Object.entries(s.impacts).map(([k,items])=>`<div class="impact-card"><h4>${k}</h4>${items.map(it=>`<div class="impact-item">${it}</div>`).join('')}</div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ─── CHARTS ───────────────────────────────────────────────────────────────────
+function switchChart(id,el){
+  document.querySelectorAll('.chart-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.chart-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('cp-'+id).classList.add('active'); el.classList.add('active');
+}
+function initBarChart(){
+  const ctx=document.getElementById('barChart').getContext('2d');
+  if(barChart)barChart.destroy();
+  barChart=new Chart(ctx,{type:'bar',data:{labels:SC.map(s=>s.name),datasets:[{data:customProbs,backgroundColor:SC.map(s=>s.hex+'26'),borderColor:SC.map(s=>s.hex),borderWidth:1.5,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1c2130',titleColor:'#e8e6e0',bodyColor:'#9a97a0',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,callbacks:{label:c=>`${c.parsed.y}% probability`}}},
+      scales:{y:{beginAtZero:true,max:55,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5a576a',font:{size:10,family:'DM Mono'},callback:v=>v+'%'}},x:{grid:{display:false},ticks:{color:'#9a97a0',font:{size:10},maxRotation:15}}}}});
+}
+function initDonutChart(){
+  const ctx=document.getElementById('donutChart').getContext('2d');
+  if(donutChart)donutChart.destroy();
+  donutChart=new Chart(ctx,{type:'doughnut',data:{labels:SC.map(s=>s.name),datasets:[{data:customProbs,backgroundColor:SC.map(s=>s.hex+'30'),borderColor:SC.map(s=>s.hex),borderWidth:1.5,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#1c2130',titleColor:'#e8e6e0',bodyColor:'#9a97a0',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,callbacks:{label:c=>`${c.parsed}%`}}}}});
+  document.getElementById('donut-legend').innerHTML=SC.map((s,i)=>`<div class="dl-row"><div class="dl-dot" style="background:${s.hex}"></div><span class="dl-label">${s.name}</span><span class="dl-val">${customProbs[i]}%</span></div>`).join('');
+}
+function initHeatmap(){
+  const lvl=['','Low','Med','High','Critical'];
+  const colors=['','rgba(90,158,111,0.25)','rgba(212,148,58,0.25)','rgba(217,95,95,0.25)','rgba(196,110,138,0.25)'];
+  const tcol=['','#5a9e6f','#d4943a','#d95f5f','#c46e8a'];
+  let html='<div class="hm-hdr" style="background:none"></div>';
+  ['Oil markets','Regime stability','Military','Humanitarian'].forEach(d=>html+=`<div class="hm-hdr">${d}</div>`);
+  SC.forEach((s,i)=>{
+    html+=`<div class="hm-row-label"><div style="width:7px;height:7px;border-radius:50%;background:${s.hex};flex-shrink:0"></div>${s.name}<span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-left:auto">${customProbs[i]}%</span></div>`;
+    ['oil','regime','mil','human'].forEach(k=>{const v=s.hm[k];html+=`<div class="hm-cell" style="background:${colors[v]};color:${tcol[v]}">${lvl[v]}</div>`;});
+  });
+  document.getElementById('hm-grid').innerHTML=html;
+}
+
+// ─── SENTIMENT ────────────────────────────────────────────────────────────────
+function switchAud(key,el){
+  document.querySelectorAll('.aud-tab').forEach(b=>b.classList.remove('active')); el.classList.add('active');
+  renderSentBars(key);
+}
+function renderSentBars(key){
+  document.getElementById('sent-bars').innerHTML=AUDIENCES[key].map(b=>`
+    <div class="sent-row">
+      <span class="sent-label">${b.label}</span>
+      <div class="sent-bar-wrap"><div class="sent-bar" style="width:0%;background:${b.hex}" data-w="${b.pct}"></div></div>
+      <span class="sent-pct">${b.pct}%</span>
+    </div>`).join('');
+  setTimeout(()=>document.querySelectorAll('.sent-bar').forEach(b=>b.style.width=b.dataset.w+'%'),50);
+}
+
+// ─── NEWS RENDER ──────────────────────────────────────────────────────────────
+function filterNews(tag,el){
+  newsFilter=tag;
+  document.querySelectorAll('.filter-row .filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); renderNews();
+}
+function renderNews(){
+  const filtered = newsFilter==='all' ? allArticles :
+    allArticles.filter(n=>n.region===newsFilter||n.tag===newsFilter);
+  if(!filtered.length){
+    document.getElementById('news-list').innerHTML='<div class="news-loading">No articles in this category.</div>'; return;
+  }
+  document.getElementById('news-list').innerHTML=filtered.map((n,i)=>{
+    const pills=(n.scenarios||[]).map(s=>`<span class="sc-pill">${s}</span>`).join('');
+    const urlEl=n.url?`<a class="read-link" href="${n.url}" target="_blank">Read more →</a>`:'';
+    return `<div class="news-item" id="ni-${i}" onclick="toggleNews(${i})">
+      <div class="news-meta">
+        <span class="news-source">${n.source||''}</span><span class="news-dot"></span>
+        <span class="news-date">${n.date||''}</span>
+        <span class="region-tag region-${n.region||'international'}">${n.region||''}</span>
+        <span class="news-tag-pill tag-${n.tag||'diplomacy'}">${n.tag||''}</span>
+      </div>
+      <div class="news-headline">${n.headline}</div>
+      <div class="news-body" id="nb-${i}">${n.summary||n.body||''}</div>
+      <div class="news-footer"><span class="new-pill">New</span>${pills}${urlEl}</div>
+    </div>`;
+  }).join('');
+}
+function toggleNews(i){
+  document.getElementById('nb-'+i)?.classList.toggle('open');
+  document.getElementById('ni-'+i)?.classList.toggle('open');
+}
+
+// ─── TIMELINE ─────────────────────────────────────────────────────────────────
+function renderTimeline(){
+  document.getElementById('tl-list').innerHTML=TL.map((e,i)=>`
+    <div class="tl-item">
+      <div class="tl-left"><div class="tl-dot" style="background:${e.dot}"></div>${i<TL.length-1?'<div class="tl-line"></div>':''}</div>
+      <div class="tl-right"><div class="tl-date">${e.date}</div><div class="tl-title">${e.title}</div><div class="tl-body">${e.body}</div></div>
+    </div>`).join('');
+}
+
+// ─── SLIDERS ──────────────────────────────────────────────────────────────────
+function renderSliders(){
+  document.getElementById('sliders').innerHTML=SC.map((s,i)=>`
+    <div class="slider-row">
+      <span class="slider-label"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${s.hex}"></span>${s.name}</span>
+      <input type="range" min="0" max="80" step="1" value="${customProbs[i]}" oninput="slideUpdate(${i},this.value)"/>
+      <span class="slider-val" id="sv-${i}">${customProbs[i]}%</span>
+    </div>`).join('');
+  updateTotal();
+}
+function slideUpdate(i,v){ customProbs[i]=parseInt(v); document.getElementById('sv-'+i).textContent=v+'%'; updateTotal(); }
+function updateTotal(){
+  const t=customProbs.reduce((a,b)=>a+b,0), el=document.getElementById('total-val');
+  el.textContent=t+'%'; el.style.color=t>100?'var(--red)':t===100?'var(--green)':'var(--accent)';
+}
+function applyProbs(){ renderScenarios(); if(barChart)initBarChart(); if(donutChart){initDonutChart();initHeatmap();} }
+function resetProbs(){ customProbs=SC.map(s=>s.prob); renderSliders(); applyProbs(); }
+
+// ─── EXPORT ───────────────────────────────────────────────────────────────────
+function exportJSON(){
+  const data={title:'Iran Conflict Intelligence Dashboard',exportDate:new Date().toISOString(),scenarios:SC.map((s,i)=>({...s,customProb:customProbs[i]})),articles:allArticles};
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download='iran-dashboard-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderScenarios();
+renderTimeline();
+renderSliders();
+renderSentBars('global');
+updateClock();
+setInterval(updateClock, 60000);
+fetchNews(false);
+</script>
+</body>
+</html>
